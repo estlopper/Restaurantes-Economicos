@@ -40,6 +40,7 @@ const create = async function (req, res) {
   let newProduct = Product.build(req.body)
   try {
     newProduct = await newProduct.save()
+    await calcIsEconomic(req.body.restaurantId)
     res.json(newProduct)
   } catch (err) {
     res.status(500).send(err)
@@ -50,6 +51,7 @@ const update = async function (req, res) {
   try {
     await Product.update(req.body, { where: { id: req.params.productId } })
     const updatedProduct = await Product.findByPk(req.params.productId)
+    await calcIsEconomic(req.body.restaurantId)
     res.json(updatedProduct)
   } catch (err) {
     res.status(500).send(err)
@@ -65,6 +67,7 @@ const destroy = async function (req, res) {
     } else {
       message = 'Could not delete product.'
     }
+    await calcIsEconomic(req.body.restaurantId)
     res.json(message)
   } catch (err) {
     res.status(500).send(err)
@@ -104,6 +107,32 @@ const popular = async function (req, res) {
     res.json(topProducts.slice(0, 3))
   } catch (err) {
     res.status(500).send(err)
+  }
+}
+
+const calcIsEconomic = async function (restaurantId) {
+  const mediaMio = await Product.findOne({
+    where: { restaurantId: { [Sequelize.Op.eq]: restaurantId } },
+    attributes: [
+      [Sequelize.fn('AVG', Sequelize.col('price')), 'avgPrice']
+    ]
+  })
+
+  const mediaOtros = await Product.findOne({
+    where: { restaurantId: { [Sequelize.Op.ne]: restaurantId } },
+    attributes: [
+      [Sequelize.fn('AVG', Sequelize.col('price')), 'avgPrice']
+    ]
+  })
+
+  const restaurant = await Restaurant.findByPk(restaurantId)
+  if (mediaMio !== null && mediaOtros !== null) {
+    if (mediaMio.dataValues.avgPrice < mediaOtros.dataValues.avgPrice) {
+      restaurant.isEconomic = true
+    } else {
+      restaurant.isEconomic = false
+    }
+    await restaurant.save()
   }
 }
 

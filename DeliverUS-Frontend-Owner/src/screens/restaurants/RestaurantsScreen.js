@@ -40,6 +40,16 @@ export default function RestaurantsScreen ({ navigation, route }) {
           <TextSemiBold>Avg. service time: <TextSemiBold textStyle={{ color: GlobalStyles.brandPrimary }}>{item.averageServiceMinutes} min.</TextSemiBold></TextSemiBold>
         }
         <TextSemiBold>Shipping: <TextSemiBold textStyle={{ color: GlobalStyles.brandPrimary }}>{item.shippingCosts.toFixed(2)}€</TextSemiBold></TextSemiBold>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }} >
+        <TextRegular numberOfLines={2}>{item.description}</TextRegular>
+            {item.isEconomic &&
+                <TextRegular textStyle={[styles.badge, { color: GlobalStyles.brandSuccess, borderColor: GlobalStyles.brandSuccess }] }>€</TextRegular>
+            }
+            {!item.isEconomic &&
+            <TextRegular textStyle={[styles.badge, { color: GlobalStyles.brandPrimary, borderColor: GlobalStyles.brandPrimary }] }>€€</TextRegular>
+            }
+        </View>
+
         <View style={styles.actionButtonsContainer}>
           <Pressable
             onPress={() => navigation.navigate('EditRestaurantScreen', { id: item.id })
